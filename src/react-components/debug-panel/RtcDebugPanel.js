@@ -21,6 +21,7 @@ const StatsType = {
   CANDIDATE_PAIR: "candidate-pair"
 };
 
+const ERROR_COLOR = "#8b1c00";
 const STATS_REFRESH_TIME = 500;
 const PRODUCERS_KEY = "producers";
 const CONSUMERS_KEY = "consumers";
@@ -47,8 +48,10 @@ function TrackStatsPanel({ title, data, xAxis, yAxis, stats }) {
     paused: data.paused,
     kind: data.kind
   };
+
+  const backgroundColor = !data.opened || !stats?.speed ? ERROR_COLOR : null;
   return (
-    <DataPanel title={`${data?.kind} ${title}`} data={props}>
+    <DataPanel title={`${data?.kind} ${title}`} data={props} backgroundColor={backgroundColor}>
       {data?.track && <DataPanel key={data.id} data={data.track} title={`track`} />}
       {stats && (
         <DataPanel
@@ -73,10 +76,15 @@ TrackStatsPanel.propTypes = {
   data: PropTypes.object,
   xAxis: PropTypes.string,
   yAxis: PropTypes.string,
-  stats: PropTypes.object
+  stats: PropTypes.object,
+  backgroundColor: PropTypes.string
 };
 
 function TransportPanel({ title, data, candidates, producers, consumers, isButtonEnabled, onRestart }) {
+  const error = producers?.some(producer => {
+    return !producer.props?.data?.opened || !producer.props?.stats?.speed;
+  });
+  const backgroundColor = error ? ERROR_COLOR : null;
   return (
     <CollapsiblePanel key={title} title={title} border url={`${MEDIASOUP_DOC_BASE_URL}#Transport`} data={data}>
       <PanelMessageButton
@@ -85,23 +93,31 @@ function TransportPanel({ title, data, candidates, producers, consumers, isButto
         disabled={!isButtonEnabled}
         primary
       />
-      {candidates?.length && (
-        <CollapsiblePanel key={`Candidates`} title={`Candidates`} row url={`${MDN_DOC_BASE_URL}RTCIceCandidate`} border>
-          {candidates}
-        </CollapsiblePanel>
-      )}
-      {producers?.length && (
+      <CollapsiblePanel
+        key={`Candidates`}
+        title={`Candidates`}
+        row
+        url={`${MDN_DOC_BASE_URL}RTCIceCandidate`}
+        border
+        backgroundColor={candidates?.length === 0 && data?.state === "connected" ? ERROR_COLOR : null}
+      >
+        {(candidates?.length && candidates) || <p className={classNames(styles.rtcLogMsg)}>No candidates available</p>}
+      </CollapsiblePanel>
+      {(producers?.length && (
         <CollapsiblePanel
           key={`Local producers`}
           title={`Local producers`}
           row
           url={`${MEDIASOUP_DOC_BASE_URL}#Producer`}
           border
+          collapsed
+          backgroundColor={backgroundColor}
         >
           {producers}
         </CollapsiblePanel>
-      )}
-      {consumers}
+      )) ||
+        null}
+      {consumers || null}
     </CollapsiblePanel>
   );
 }
@@ -204,7 +220,7 @@ export default class RtcDebugPanel extends Component {
     for (const data of stats.values()) {
       if (data["type"] === StatsType.CANDIDATE_PAIR) {
         const candidatePair = data;
-        if (candidatePair && (candidatePair["nominated"] || candidatePair["selected"])) {
+        if (candidatePair && candidatePair["selected"] && candidatePair["state"] === "succeeded") {
           for (const values of stats.values()) {
             if (candidatePair["localCandidateId"] === values["id"]) {
               result[StatsType.LOCAL_CANDIDATE] = values;
@@ -552,6 +568,10 @@ export default class RtcDebugPanel extends Component {
           />
         );
       });
+      const error = reducedConsumer?.consumers?.some(consumer => {
+        return !consumer.opened || !stats[consumer.id]?.speed;
+      });
+      const backgroundColor = error ? ERROR_COLOR : null;
       components.push(
         <CollapsiblePanel
           key={reducedConsumer.name}
@@ -559,6 +579,8 @@ export default class RtcDebugPanel extends Component {
           url={`${MEDIASOUP_DOC_BASE_URL}#Consumer`}
           data={{ peerId: reducedConsumer.peerId }}
           border
+          collapsed
+          backgroundColor={backgroundColor}
         >
           <CollapsiblePanel row>{consumerPanels}</CollapsiblePanel>
         </CollapsiblePanel>
@@ -598,7 +620,7 @@ export default class RtcDebugPanel extends Component {
             data={{ id: transportId }}
             border
           >
-            {producers?.length && (
+            {(producers?.length && (
               <CollapsiblePanel
                 key={`producers`}
                 title={`Producer Stats`}
@@ -609,8 +631,9 @@ export default class RtcDebugPanel extends Component {
               >
                 {producers}
               </CollapsiblePanel>
-            )}
-            {consumers?.length && (
+            )) ||
+              null}
+            {(consumers?.length && (
               <CollapsiblePanel
                 key={`consumers`}
                 title={`Consumer Stats`}
@@ -621,7 +644,8 @@ export default class RtcDebugPanel extends Component {
               >
                 {consumers}
               </CollapsiblePanel>
-            )}
+            )) ||
+              null}
           </CollapsiblePanel>
         );
       }
@@ -703,6 +727,7 @@ export default class RtcDebugPanel extends Component {
                     opened: transportsData?.[TransportType.RECEIVE]?.opened,
                     state: transportsData?.[TransportType.RECEIVE]?.state
                   }}
+                  candidates={this.createCandidates(transportsData?.[TransportType.RECEIVE]?.candidates)}
                   consumers={this.createConsumers(transportsData?.[TransportType.RECEIVE]?.consumers, statsData)}
                   onRestart={this.restartRecvICE}
                   isButtonEnabled={
