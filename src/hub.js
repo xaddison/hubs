@@ -163,6 +163,7 @@ import { SOUND_CHAT_MESSAGE } from "./systems/sound-effects-system";
 import "./gltf-component-mappings";
 
 import { App } from "./App";
+import AudioManager from "./utils/audio-manager";
 import { platformUnsupported } from "./support";
 
 window.APP = new App();
@@ -822,6 +823,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const authChannel = new AuthChannel(store);
   const hubChannel = new HubChannel(store, hubId);
   const entryManager = new SceneEntryManager(hubChannel, authChannel, history);
+
+  window.APP.scene = scene;
+  window.APP.audioManager = new AudioManager(scene, store);
+  window.APP.hubChannel = hubChannel;
+
   const performConditionalSignIn = async (predicate, action, signInMessage, signInCompleteMessage, onFailure) => {
     if (predicate()) return action();
 
@@ -877,9 +883,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   entryManager.init();
 
   const linkChannel = new LinkChannel(store);
-
-  window.APP.scene = scene;
-  window.APP.hubChannel = hubChannel;
   window.dispatchEvent(new CustomEvent("hub_channel_ready"));
 
   const handleEarlyVRMode = () => {

@@ -254,19 +254,20 @@ class PreferenceSelect extends React.Component {
     defaultString: PropTypes.string,
     store: PropTypes.object,
     storeKey: PropTypes.string,
-    setValue: PropTypes.func
+    setValue: PropTypes.func,
+    onChanged: PropTypes.func
   };
-  constructor(props) {
+  constructor() {
     super();
-    this.options = props.options.map(({ text, value }, i) => {
+  }
+  render() {
+    const options = this.props.options.map(({ text, value }, i) => {
       return (
-        <option key={`option_${props.storeKey}_${i}`} value={value}>
+        <option key={`option_${this.props.storeKey}_${i}`} value={value}>
           {text}
         </option>
       );
     });
-  }
-  render() {
     const storedPref = this.props.store.state.preferences[this.props.storeKey];
     const value = storedPref === undefined || storedPref === "" ? this.props.defaultString : storedPref;
     return (
@@ -274,9 +275,10 @@ class PreferenceSelect extends React.Component {
         value={value}
         onChange={e => {
           this.props.setValue(e.target.value);
+          this.props.onChanged && this.props.onChanged(e.target.value);
         }}
       >
-        {this.options}
+        {options}
       </Select>
     );
   }
@@ -494,156 +496,6 @@ CloseButton.propTypes = {
   onClick: PropTypes.func
 };
 
-const preferredCamera = {
-  key: "preferredCamera",
-  prefType: PREFERENCE_LIST_ITEM_TYPE.SELECT,
-  options: [
-    { value: "user", text: "User-Facing" },
-    { value: "environment", text: "Environment" },
-    { value: "default", text: "Default" }
-  ],
-  defaultString: "default"
-};
-
-const availableLocales = [{ value: "browser", text: getMessages()["preferences.browserDefault"] }];
-for (const locale in AVAILABLE_LOCALES) {
-  availableLocales.push({ value: locale, text: AVAILABLE_LOCALES[locale] });
-}
-
-const DEFINITIONS = new Map([
-  [
-    CATEGORY_TOUCHSCREEN,
-    [
-      { key: "enableOnScreenJoystickLeft", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
-      { key: "enableOnScreenJoystickRight", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
-      { key: "enableGyro", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: true },
-      { key: "invertTouchscreenCameraMove", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: true }
-    ]
-  ],
-  [
-    CATEGORY_MOVEMENT,
-    [
-      {
-        key: "snapRotationDegrees",
-        prefType: PREFERENCE_LIST_ITEM_TYPE.NUMBER_WITH_RANGE,
-        min: 0,
-        max: 90,
-        step: 5,
-        digits: 0,
-        defaultNumber: 45
-      },
-      { key: "disableMovement", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
-      { key: "disableBackwardsMovement", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
-      { key: "disableStrafing", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
-      { key: "disableTeleporter", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
-      {
-        key: "movementSpeedModifier",
-        prefType: PREFERENCE_LIST_ITEM_TYPE.NUMBER_WITH_RANGE,
-        min: 0,
-        max: 2,
-        step: 0.1,
-        digits: 1,
-        defaultNumber: 1
-      }
-    ]
-  ],
-  [
-    CATEGORY_AUDIO,
-    [
-      { key: "muteMicOnEntry", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
-      {
-        key: "globalVoiceVolume",
-        prefType: PREFERENCE_LIST_ITEM_TYPE.NUMBER_WITH_RANGE,
-        min: 0,
-        max: 200,
-        step: 5,
-        digits: 0,
-        defaultNumber: 100
-      },
-      {
-        key: "globalMediaVolume",
-        prefType: PREFERENCE_LIST_ITEM_TYPE.NUMBER_WITH_RANGE,
-        min: 0,
-        max: 200,
-        step: 5,
-        digits: 0,
-        defaultNumber: 100
-      },
-      { key: "disableSoundEffects", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
-      {
-        key: "disableEchoCancellation",
-        prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX,
-        defaultBool: false,
-        promptForRefresh: true
-      },
-      {
-        key: "disableNoiseSuppression",
-        prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX,
-        defaultBool: false,
-        promptForRefresh: true
-      },
-      {
-        key: "disableAutoGainControl",
-        prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX,
-        defaultBool: false,
-        promptForRefresh: true
-      }
-    ]
-  ],
-  [
-    CATEGORY_MISC,
-    [
-      {
-        key: "locale",
-        prefType: PREFERENCE_LIST_ITEM_TYPE.SELECT,
-        options: availableLocales,
-        defaultString: "browser"
-      },
-      { key: "onlyShowNametagsInFreeze", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
-      { key: "maxResolution", prefType: PREFERENCE_LIST_ITEM_TYPE.MAX_RESOLUTION },
-      preferredCamera,
-      {
-        key: "materialQualitySetting",
-        prefType: PREFERENCE_LIST_ITEM_TYPE.SELECT,
-        options: [{ value: "low", text: "Low" }, { value: "medium", text: "Medium" }, { value: "high", text: "High" }],
-        defaultString: defaultMaterialQualitySetting,
-        promptForRefresh: true
-      },
-      {
-        key: "enableDynamicShadows",
-        prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX,
-        defaultBool: false,
-        promptForRefresh: true
-      },
-      { key: "disableAutoPixelRatio", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
-      { key: "allowMultipleHubsInstances", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
-      { key: "disableIdleDetection", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
-      { key: "preferMobileObjectInfoPanel", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
-      { key: "animateWaypointTransitions", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: true },
-      { key: "showFPSCounter", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
-      { key: "showRtcDebugPanel", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false }
-    ]
-  ]
-]);
-
-// add camera choices to preferredCamera's options
-navigator.mediaDevices
-  .enumerateDevices()
-  .then(function(devices) {
-    devices.forEach(function(device) {
-      if (device.kind == "videoinput") {
-        const shortId = device.deviceId.substr(0, 9);
-        preferredCamera.options.push({
-          value: device.deviceId,
-          text: device.label || `Camera (${shortId})`
-        });
-      }
-    });
-  })
-  .catch(function(err) {
-    console.log(err.name + ": " + err.message);
-  });
-
 const controlType = new Map([
   [PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, BooleanPreference],
   [PREFERENCE_LIST_ITEM_TYPE.MAX_RESOLUTION, MaxResolutionPreferenceItem],
@@ -676,6 +528,7 @@ function createItem(itemProps, store) {
       store={store}
       storeKey={itemProps.key}
       setValue={setValue}
+      onChanged={itemProps.onChanged}
     />
   );
 }
@@ -745,25 +598,224 @@ class RefreshPrompt extends React.Component {
 export default class PreferencesScreen extends Component {
   static propTypes = {
     onClose: PropTypes.func,
-    store: PropTypes.object
+    store: PropTypes.object,
+    scene: PropTypes.object
   };
 
-  state = {
-    category: CATEGORY_AUDIO,
-    toastHeight: "150px"
-  };
-
-  constructor(props) {
+  constructor() {
     // TODO: When this component is recreated it clears its state.
     // This happens several times as the page is loading.
     // We should either avoid remounting or persist the category somewhere besides state.
     super();
-    const toItem = itemProps => createItem(itemProps, props.store);
+    this.onresize = () => {
+      this.forceUpdate();
+    };
+    this.storeUpdated = () => {
+      this.forceUpdate();
+    };
+    this.devicesUpdated = () => {
+      this.updateMediaDevices();
+    };
+    this.audioManager = window.APP.audioManager;
+
+    this.state = {
+      category: CATEGORY_AUDIO,
+      toastHeight: "150px",
+      preferredMic: {
+        key: "preferredMic",
+        prefType: PREFERENCE_LIST_ITEM_TYPE.SELECT,
+        options: [{ value: "none", text: "None" }],
+        defaultString: "none",
+        onChanged: this.onMicSelectionChanged
+      },
+      preferredCamera: {
+        key: "preferredCamera",
+        prefType: PREFERENCE_LIST_ITEM_TYPE.SELECT,
+        options: [
+          { value: "user", text: "User-Facing" },
+          { value: "environment", text: "Environment" },
+          { value: "default", text: "Default" }
+        ],
+        defaultString: "default"
+      }
+    };
+  }
+
+  onMicSelectionChanged = deviceId => {
+    this.audioManager.selectMicDevice(deviceId).then(this.updateAudioDevice);
+  };
+
+  onMediaDevicesUpdated = () => {
+    this.updateAudioDevice();
+  };
+
+  updateAudioDevice = () => {
+    const micOptions = this.audioManager.micDevices.map(device => ({
+      value: device.value,
+      text: device.label
+    }));
+    const preferredMic = { ...this.state.preferredMic };
+    preferredMic.options = [...micOptions];
+    this.props.store.update({ preferences: { ["preferredMic"]: this.audioManager.selectedMicDeviceId } });
+    this.setState({ preferredMic });
+  };
+
+  componentDidMount() {
+    window.APP.preferenceScreenIsVisible = true;
+    window.addEventListener("resize", this.onresize);
+    this.props.store.addEventListener("statechanged", this.storeUpdated);
+    this.props.scene.addEventListener("devicechange", this.onMediaDevicesUpdated);
+
+    // Gather Mic information if it hasn't been gathered yet
+    if (!this.audioManager.isAudioDeviceSelected) {
+      this.audioManager.setMediaStreamToDefault().then(() => {
+        this.audioManager.fetchMicDevices().then(this.updateAudioDevice);
+      });
+    } else {
+      this.updateAudioDevice();
+    }
+  }
+
+  componentWillUnmount() {
+    window.APP.preferenceScreenIsVisible = false;
+    window.removeEventListener("resize", this.onresize);
+    this.props.store.removeEventListener("statechanged", this.storeUpdated);
+    this.props.scene.removeEventListener("devicechange", this.onMediaDevicesUpdated);
+  }
+
+  createSections() {
+    const availableLocales = [{ value: "browser", text: getMessages()["preferences.browserDefault"] }];
+    for (const locale in AVAILABLE_LOCALES) {
+      availableLocales.push({ value: locale, text: AVAILABLE_LOCALES[locale] });
+    }
+
+    const DEFINITIONS = new Map([
+      [
+        CATEGORY_TOUCHSCREEN,
+        [
+          { key: "enableOnScreenJoystickLeft", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
+          { key: "enableOnScreenJoystickRight", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
+          { key: "enableGyro", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: true },
+          { key: "invertTouchscreenCameraMove", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: true }
+        ]
+      ],
+      [
+        CATEGORY_MOVEMENT,
+        [
+          {
+            key: "snapRotationDegrees",
+            prefType: PREFERENCE_LIST_ITEM_TYPE.NUMBER_WITH_RANGE,
+            min: 0,
+            max: 90,
+            step: 5,
+            digits: 0,
+            defaultNumber: 45
+          },
+          { key: "disableMovement", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
+          { key: "disableBackwardsMovement", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
+          { key: "disableStrafing", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
+          { key: "disableTeleporter", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
+          {
+            key: "movementSpeedModifier",
+            prefType: PREFERENCE_LIST_ITEM_TYPE.NUMBER_WITH_RANGE,
+            min: 0,
+            max: 2,
+            step: 0.1,
+            digits: 1,
+            defaultNumber: 1
+          }
+        ]
+      ],
+      [
+        CATEGORY_AUDIO,
+        [
+          this.state.preferredMic,
+          { key: "muteMicOnEntry", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
+          {
+            key: "globalVoiceVolume",
+            prefType: PREFERENCE_LIST_ITEM_TYPE.NUMBER_WITH_RANGE,
+            min: 0,
+            max: 200,
+            step: 5,
+            digits: 0,
+            defaultNumber: 100
+          },
+          {
+            key: "globalMediaVolume",
+            prefType: PREFERENCE_LIST_ITEM_TYPE.NUMBER_WITH_RANGE,
+            min: 0,
+            max: 200,
+            step: 5,
+            digits: 0,
+            defaultNumber: 100
+          },
+          { key: "disableSoundEffects", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
+          {
+            key: "disableEchoCancellation",
+            prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX,
+            defaultBool: false,
+            promptForRefresh: true
+          },
+          {
+            key: "disableNoiseSuppression",
+            prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX,
+            defaultBool: false,
+            promptForRefresh: true
+          },
+          {
+            key: "disableAutoGainControl",
+            prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX,
+            defaultBool: false,
+            promptForRefresh: true
+          }
+        ]
+      ],
+      [
+        CATEGORY_MISC,
+        [
+          {
+            key: "locale",
+            prefType: PREFERENCE_LIST_ITEM_TYPE.SELECT,
+            options: availableLocales,
+            defaultString: "browser"
+          },
+          { key: "onlyShowNametagsInFreeze", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
+          { key: "maxResolution", prefType: PREFERENCE_LIST_ITEM_TYPE.MAX_RESOLUTION },
+          this.state.preferredCamera,
+          {
+            key: "materialQualitySetting",
+            prefType: PREFERENCE_LIST_ITEM_TYPE.SELECT,
+            options: [
+              { value: "low", text: "Low" },
+              { value: "medium", text: "Medium" },
+              { value: "high", text: "High" }
+            ],
+            defaultString: defaultMaterialQualitySetting,
+            promptForRefresh: true
+          },
+          {
+            key: "enableDynamicShadows",
+            prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX,
+            defaultBool: false,
+            promptForRefresh: true
+          },
+          { key: "disableAutoPixelRatio", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
+          { key: "allowMultipleHubsInstances", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
+          { key: "disableIdleDetection", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
+          { key: "preferMobileObjectInfoPanel", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
+          { key: "animateWaypointTransitions", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: true },
+          { key: "showFPSCounter", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false },
+          { key: "showRtcDebugPanel", prefType: PREFERENCE_LIST_ITEM_TYPE.CHECK_BOX, defaultBool: false }
+        ]
+      ]
+    ]);
+
+    const toItem = itemProps => createItem(itemProps, this.props.store);
     const items = new Map();
     for (const [category, definitions] of DEFINITIONS) {
       items.set(category, definitions.map(toItem));
     }
-    this.sections = new Map([
+    return new Map([
       [CATEGORY_AUDIO, [{ items: items.get(CATEGORY_AUDIO) }]],
       [
         CATEGORY_CONTROLS,
@@ -780,23 +832,6 @@ export default class PreferencesScreen extends Component {
       ],
       [CATEGORY_MISC, [{ items: items.get(CATEGORY_MISC) }]]
     ]);
-    this.onresize = () => {
-      this.forceUpdate();
-    };
-    this.storeUpdated = () => {
-      this.forceUpdate();
-    };
-  }
-
-  componentDidMount() {
-    window.APP.preferenceScreenIsVisible = true;
-    window.addEventListener("resize", this.onresize);
-    this.props.store.addEventListener("statechanged", this.storeUpdated);
-  }
-  componentWillUnmount() {
-    window.APP.preferenceScreenIsVisible = false;
-    window.removeEventListener("resize", this.onresize);
-    this.props.store.removeEventListener("statechanged", this.storeUpdated);
   }
 
   render() {
@@ -818,7 +853,8 @@ export default class PreferencesScreen extends Component {
                 key={`category-${category}-header`}
                 title={CATEGORY_NAMES.get(category)}
                 onClick={() => {
-                  this.setState({ category });
+                  const preferredMic = { ...this.state.preferredMic };
+                  this.setState({ category, preferredMic });
                 }}
                 ariaLabel={`${getMessages()["preferences.selectCategory"]} ${CATEGORY_NAMES.get(category)}`}
                 selected={category === this.state.category}
@@ -827,7 +863,9 @@ export default class PreferencesScreen extends Component {
           </Nav>
           <div className={styles.contentContainer}>
             <div className={styles.scrollingContent}>
-              {this.sections.get(this.state.category).map(Section)}
+              {this.createSections()
+                .get(this.state.category)
+                .map(Section)}
               {shouldPromptForRefresh && (
                 <div
                   style={{
